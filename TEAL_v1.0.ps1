@@ -29,7 +29,7 @@ instance of MSFT_SomFilter
 	CreationDate = "20211004201639.198000-000";
 	Domain = "intern.mtossen.com";
 	ID = "{63363B2D-E917-4F58-A861-3E9203A1B281}";
-	Name = "ITR_AllServers";
+	Name = "TEAL_AllServers";
 	Rules = {
 instance of MSFT_Rule
 {
