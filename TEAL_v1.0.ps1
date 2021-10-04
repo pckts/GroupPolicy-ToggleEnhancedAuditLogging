@@ -6,7 +6,7 @@ Import-Module -Name ActiveDirectory | Out-Null
 New-Item -ItemType "directory" -Path "C:\TEAL" -Force | Out-Null
 
 #Import GPO and bind everywhere
-$GPOName = "ITR_EnhancedAuditLogging" | Out-Null
+$GPOName = "TEAL_ToggleEnhancedAuditLogging" | Out-Null
 $Partition = Get-ADDomainController | select-object DefaultPartition | Out-Null
 $GPOSource = "C:\TEAL" | Out-Null
 import-gpo -BackupId "166D2DD0-AE7C-425F-934A-CC84BA44EEFA" -TargetName $GPOName -path $GPOSource -CreateIfNeeded | Out-Null
@@ -40,11 +40,11 @@ instance of MSFT_Rule
 }; 
 '@ | Out-Null
 $mof | out-file C:\TEAL\ITR_AllServers.mof | Out-Null
-mofcomp -N:root\Policy "C:\TEAL\ITR_AllServers.mof" | Out-Null
+mofcomp -N:root\Policy "C:\TEAL\TEAL_AllServers.mof" | Out-Null
 
 #Sets WMI filter on GPO
-$WMIFilterName = "ITR_AllServers" | Out-Null
-$GroupPolicyName = "ITR_EnhancedAuditLogging" | Out-Null
+$WMIFilterName = "TEAL_AllServers" | Out-Null
+$GroupPolicyName = "TEAL_ToggleEnhancedAuditLogging" | Out-Null
 $GPdomain = New-Object Microsoft.GroupPolicy.GPDomain | Out-Null
 $SearchFilter = New-Object Microsoft.GroupPolicy.GPSearchCriteria | Out-Null
 $allWmiFilters = $GPdomain.SearchWmiFilters($SearchFilter) | Out-Null
