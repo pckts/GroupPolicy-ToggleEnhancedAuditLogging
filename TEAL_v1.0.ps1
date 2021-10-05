@@ -1,34 +1,59 @@
-#Imports neccesary modules
+#By packet
+
+#Require run as admin
+#Requires -RunAsAdministrator
+
+#Sets the TLS settings to allow downloads via HTTP
+#Downloads, installs, and imports neccesary modules
+[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+$ProgressPreference = "SilentlyContinue"
 Import-Module -Name GroupPolicy | Out-Null
 Import-Module -Name ActiveDirectory | Out-Null
 
-#Creates working directory
-New-Item -ItemType "directory" -Path "C:\TEAL" -Force | Out-Null
+#Tries to import archive module before installing, as installing takes a long time.
+try
+{
+    import-module Microsoft.powershell.archive | out-null
+}
+catch
+{
+    install-module Microsoft.powershell.archive | out-null
+}
+
+#Create working directory
+New-Item -ItemType "directory" -Path C:\TEAL | Out-Null
+sleep 1
+
+#Downloads GPO and unzips it into working directory
+$GPOURL = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String("aHR0cHM6Ly9naXRodWIuY29tL3Bja3RzL1RFQUwvYmxvYi9tYWluL1RFQUxfR1BPLnppcA=="))
+Invoke-WebRequest -Uri $GPOURL -OutFile C:\TEAL\GPO.zip | Out-Null
+sleep 1
+Expand-Archive -LiteralPath 'C:\TEAL\GPO.zip' -DestinationPath C:\TEAL
 
 #Import GPO and bind everywhere
-$GPOName = "TEAL_ToggleEnhancedAuditLogging" | Out-Null
-$Partition = Get-ADDomainController | select-object DefaultPartition | Out-Null
-$GPOSource = "C:\TEAL" | Out-Null
-import-gpo -BackupId "166D2DD0-AE7C-425F-934A-CC84BA44EEFA" -TargetName $GPOName -path $GPOSource -CreateIfNeeded | Out-Null
+$GPOName = "TEAL_ToggleEnhancedAuditLogging"
+$Partition = Get-ADDomainController | select-object DefaultPartition
+$GPOSource = "C:\TEAL"
+import-gpo -BackupId "9D866446-09D5-43E2-A97B-86C0C9C6C6F5" -TargetName $GPOName -path $GPOSource -CreateIfNeeded | Out-Null
 Get-GPO -Name $GPOName | New-GPLink -Target $Partition.DefaultPartition | Out-Null
 Set-GPLink -Name $GPOName -Enforced Yes -Target $Partition.DefaultPartition | Out-Null
-$Blocked = Get-ADOrganizationalUnit -Filter * | Get-GPInheritance | Where-Object {$_.GPOInheritanceBlocked} | select-object Path | Out-Null
-foreach ($B in $Blocked) | Out-Null
+$Blocked = Get-ADOrganizationalUnit -Filter * | Get-GPInheritance | Where-Object {$_.GPOInheritanceBlocked} | select-object Path
+foreach ($B in $Blocked)
 {
     New-GPLink -Name $GPOName -Target $B.Path | Out-Null
     Set-GPLink -Name $GPOName -Enforced Yes -Target $B.Path | Out-Null
 }
 
-#Create and import WMI Filter
+#Creates WMI filter
 $MOF = @' 
 
 instance of MSFT_SomFilter
 {
-	Author = "packet@intern.mtossen.com";
+	Author = "packet@teal.teal";
 	ChangeDate = "20211004201644.604000-000";
 	CreationDate = "20211004201639.198000-000";
-	Domain = "intern.mtossen.com";
-	ID = "{63363B2D-E917-4F58-A861-3E9203A1B281}";
+	Domain = "TEAL.TEAL";
+	ID = "{62806280-4A95-4178-A48F-14A2E4871BB8}";
 	Name = "TEAL_AllServers";
 	Rules = {
 instance of MSFT_Rule
@@ -38,20 +63,22 @@ instance of MSFT_Rule
 	TargetNameSpace = "root\\CIMv2";
 }};
 }; 
-'@ | Out-Null
-$mof | out-file C:\TEAL\ITR_AllServers.mof | Out-Null
+'@
+$mof | out-file C:\TEAL\TEAL_AllServers.mof
+
+#Imports WMI filter
 mofcomp -N:root\Policy "C:\TEAL\TEAL_AllServers.mof" | Out-Null
 
 #Sets WMI filter on GPO
-$WMIFilterName = "TEAL_AllServers" | Out-Null
-$GroupPolicyName = "TEAL_ToggleEnhancedAuditLogging" | Out-Null
-$GPdomain = New-Object Microsoft.GroupPolicy.GPDomain | Out-Null
-$SearchFilter = New-Object Microsoft.GroupPolicy.GPSearchCriteria | Out-Null
-$allWmiFilters = $GPdomain.SearchWmiFilters($SearchFilter) | Out-Null
-$WMIfilter = $allWmiFilters | Where-Object Name -eq $WMIFilterName | Out-Null
-$GroupPolicyObject = $null | Out-Null
-$GroupPolicyObject = Get-GPO -Name $GroupPolicyName | Out-Null
-$GroupPolicyObject.WmiFilter = $WMIfilter | Out-Null
+$WMIFilterName = "TEAL_AllServers"
+$GroupPolicyName = "TEAL_ToggleEnhancedAuditLogging"
+$GPdomain = New-Object Microsoft.GroupPolicy.GPDomain
+$SearchFilter = New-Object Microsoft.GroupPolicy.GPSearchCriteria
+$allWmiFilters = $GPdomain.SearchWmiFilters($SearchFilter)
+$WMIfilter = $allWmiFilters | Where-Object Name -eq $WMIFilterName
+$GroupPolicyObject = $null
+$GroupPolicyObject = Get-GPO -Name $GroupPolicyName
+$GroupPolicyObject.WmiFilter = $WMIfilter
 
 #Deletes working directory
 Remove-Item C:\TEAL -Recurse -Force | Out-Null
