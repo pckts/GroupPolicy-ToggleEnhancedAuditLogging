@@ -1,4 +1,5 @@
-#By packet
+#v 1.0
+#by packet
 
 #Require run as admin
 #Requires -RunAsAdministrator
@@ -13,11 +14,11 @@ Import-Module -Name ActiveDirectory | Out-Null
 #Tries to import archive module before installing, as installing takes a long time.
 try
 {
-    import-module Microsoft.powershell.archive | out-null
+    import-module Microsoft.powershell.archive
 }
 catch
 {
-    install-module Microsoft.powershell.archive | out-null
+    install-module Microsoft.powershell.archive
 }
 
 #Create working directory
@@ -25,10 +26,10 @@ New-Item -ItemType "directory" -Path C:\TEAL | Out-Null
 sleep 1
 
 #Downloads GPO and unzips it into working directory
-$GPOURL = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String("aHR0cHM6Ly9naXRodWIuY29tL3Bja3RzL1RFQUwvYmxvYi9tYWluL1RFQUxfR1BPLnppcA=="))
-Invoke-WebRequest -Uri $GPOURL -OutFile C:\TEAL\GPO.zip | Out-Null
+$GPOURL = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String("aHR0cHM6Ly9naXRodWIuY29tL3Bja3RzL1RFQUwvcmF3L21haW4vVEVBTF9HUE8uemlw"))
+Invoke-WebRequest -Uri $GPOURL -OutFile C:\TEAL\TEAL_GPO.zip | Out-Null
 sleep 1
-Expand-Archive -LiteralPath 'C:\TEAL\GPO.zip' -DestinationPath C:\TEAL
+Expand-Archive -LiteralPath 'C:\TEAL\TEAL_GPO.zip' -DestinationPath C:\TEAL
 
 #Import GPO and bind everywhere
 $GPOName = "TEAL_ToggleEnhancedAuditLogging"
