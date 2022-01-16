@@ -1,2 +1,3 @@
-# TEAL
-Toggle Enhanced Audit Logging
+# GroupPolicy-ToggleEnhancedAuditLogging
+
+Previously known as TEAL
