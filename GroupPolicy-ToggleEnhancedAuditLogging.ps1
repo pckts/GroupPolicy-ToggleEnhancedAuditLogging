@@ -50,16 +50,16 @@ $MOF = @'
 
 instance of MSFT_SomFilter
 {
-	Author = "packet@teal.teal";
+	Author = "packet@parceu.com";
 	ChangeDate = "20211004201644.604000-000";
 	CreationDate = "20211004201639.198000-000";
-	Domain = "TEAL.TEAL";
+	Domain = "parceu.com";
 	ID = "{62806280-4A95-4178-A48F-14A2E4871BB8}";
 	Name = "TEAL_AllServers";
 	Rules = {
 instance of MSFT_Rule
 {
-	Query = "SELECT * FROM Win32_OperatingSystem WHERE PoductType = \"2\" OR ProductType = \"3\"";
+	Query = "SELECT * FROM Win32_OperatingSystem WHERE ProductType = \"2\" OR ProductType = \"3\"";
 	QueryLanguage = "WQL";
 	TargetNameSpace = "root\\CIMv2";
 }};
